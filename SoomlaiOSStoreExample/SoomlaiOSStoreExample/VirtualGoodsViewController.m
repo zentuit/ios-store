@@ -38,9 +38,7 @@
 @synthesize currencyBalance, table;
 
 - (void)viewDidLoad
-{
-    [[StoreController getInstance] storeOpening];
-    
+{    
     images = [NSDictionary dictionaryWithObjectsAndKeys:
 	      @"chocolate_cake.png", CHOCOLATE_CAKE_GOOD_ITEM_ID,
 	      @"pavlova.png", PAVLOVA_GOOD_ITEM_ID,
