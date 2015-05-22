@@ -29,6 +29,9 @@
 @implementation SoomlaVerification
 
 static NSString* TAG = @"SOOMLA SoomlaVerification";
+BOOL testProblem = YES;
+int testCount = 0;
+
 
 - (id) initWithTransaction:(SKPaymentTransaction*)t andPurchasable:(PurchasableVirtualItem*)pvi {
     if (self = [super init]) {
@@ -88,8 +91,9 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
         NSURLConnection *conn = [[NSURLConnection alloc] initWithRequest:request delegate:self];
         [conn start];
     } else {
-        LogError(TAG, ([NSString stringWithFormat:@"An error occured while trying to get receipt data. Stopping the purchasing process for: %@", transaction.payment.productIdentifier]));
+        LogError(TAG, ([NSString stringWithFormat:@"An error occured while trying to get receipt data. Stopping the verification process for: %@", transaction.payment.productIdentifier]));
         [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_TIMEOUT forObject:self];
+        [StoreEventHandling postVerificationError:ERR_VERIFICATION_TIMEOUT forObject:self];
     }
 }
 
@@ -114,6 +118,7 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
     if ([dataStr isEqualToString:@""]) {
         LogError(TAG, @"There was a problem when verifying. Got an empty response. Will try again later.");
         [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_FAIL forObject:self];
+        [StoreEventHandling postVerificationError:ERR_VERIFICATION_FAIL forObject:self];
         return;
     }
 
@@ -126,8 +131,12 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
     }
     
     BOOL verified = NO;
-    if (responseCode==200 && verifiedNum) {
-        
+    
+    testProblem = (testCount % 5 == 2) || (testCount % 5 == 3);
+    NSLog(@" ====== testProblem is %@", testProblem ? @"YES" : @"NO");
+    testCount++;
+    
+    if (responseCode==200 && verifiedNum && !testProblem) { //*tj
         verified = [verifiedNum boolValue];
         if (!verified) {
             NSNumber* emptyResponse = (NSNumber*)[responseDict objectForKey:@"emptyResponse"];
@@ -146,6 +155,7 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
         [StoreEventHandling postMarketPurchaseVerification:verified forItem:purchasable andTransaction:transaction forObject:self];
     } else {
         NSString* errorMsg = @"";
+        int errorCode = ERR_VERIFICATION_ERROR;
         if (responseDict) {
             @try {
                 errorMsg = [responseDict objectForKey:@"error"];
@@ -156,10 +166,12 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
         
         if ([errorMsg isEqualToString:@"ECONNRESET"]) {
             LogError(TAG, @"It appears that the iTunes servers are down. We can't verify this receipt.");
+            errorCode = ERR_VERIFICATION_UNAVAILABLE;
         }
         
         LogError(TAG, ([NSString stringWithFormat:@"There was a problem when verifying (%@). Will try again later.", errorMsg]));
-        [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_TIMEOUT forObject:self];
+        [StoreEventHandling postUnexpectedError:errorCode forObject:self];
+        [StoreEventHandling postVerificationError:errorCode forObject:self];
     }
 }
 
@@ -167,6 +179,7 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
     LogError(TAG, @"Failed to connect to verification server. Not doing anything ... the purchasing process will happen again next time the service is initialized.");
     LogDebug(TAG, [error description]);
     [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_TIMEOUT forObject:self];
+    [StoreEventHandling postVerificationError:ERR_VERIFICATION_TIMEOUT forObject:self];
 }
 
 #pragma mark SKRequestDelegate methods
@@ -179,6 +192,7 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
 - (void)request:(SKRequest *)request didFailWithError:(NSError *)error {
     LogDebug(TAG, ([NSString stringWithFormat:@"Error trying to request receipt: %@", error]));
     [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_FAIL forObject:self];
+    [StoreEventHandling postVerificationError:ERR_VERIFICATION_FAIL forObject:self];
 }
 
 @end

@@ -42,6 +42,9 @@
     [[NSNotificationCenter defaultCenter] addObserver:observer selector:selector name:EVENT_MARKET_ITEMS_REFRESH_STARTED object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:observer selector:selector name:EVENT_MARKET_ITEMS_REFRESH_FINISHED object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:observer selector:selector name:EVENT_MARKET_ITEMS_REFRESH_FAILED object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:observer selector:selector name:EVENT_VERIFICATION_ERROR object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:observer selector:selector name:EVENT_VERIFICATION_STARTED object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:observer selector:selector name:EVENT_VERIFICATION_FAILED object:nil];
 }
 
 + (void)postBillingSupported{
@@ -166,6 +169,37 @@
 
 + (void) postSoomlaStoreInitialized {
     [[NSNotificationCenter defaultCenter] postNotificationName:EVENT_SOOMLASTORE_INIT object:self];
+}
+
++ (void)postVerificationError:(int)code forObject:(id)object{
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                              [NSNumber numberWithInt:code], DICT_ELEMENT_ERROR_CODE,
+                              nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:EVENT_VERIFICATION_ERROR object:object userInfo:userInfo];
+}
+
++ (void)postVerificationStarted:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload{
+    if (!payload) {
+        payload = @"";
+    }
+    NSString* urlStr = @"";
+    if (receiptUrl) {
+        urlStr = [receiptUrl absoluteString];
+    }
+    NSDictionary *userInfo = @{DICT_ELEMENT_PURCHASABLE: purchasableVirtualItem, DICT_ELEMENT_RECEIPT: urlStr, DICT_ELEMENT_TOKEN: token, DICT_ELEMENT_DEVELOPERPAYLOAD: payload};
+    [[NSNotificationCenter defaultCenter] postNotificationName:EVENT_VERIFICATION_STARTED object:self userInfo:userInfo];
+}
+
++ (void)postVerificationFailed:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload{
+    if (!payload) {
+        payload = @"";
+    }
+    NSString* urlStr = @"";
+    if (receiptUrl) {
+        urlStr = [receiptUrl absoluteString];
+    }
+    NSDictionary *userInfo = @{DICT_ELEMENT_PURCHASABLE: purchasableVirtualItem, DICT_ELEMENT_RECEIPT: urlStr, DICT_ELEMENT_TOKEN: token, DICT_ELEMENT_DEVELOPERPAYLOAD: payload};
+    [[NSNotificationCenter defaultCenter] postNotificationName:EVENT_VERIFICATION_FAILED object:self userInfo:userInfo];
 }
 
 @end

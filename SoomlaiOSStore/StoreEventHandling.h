@@ -46,6 +46,9 @@
 #define EVENT_MARKET_ITEMS_REFRESH_FINISHED @"MarketItemsRefreshFinished"
 #define EVENT_MARKET_ITEMS_REFRESH_FAILED   @"MarketItemsRefreshFailed"
 #define EVENT_UNEXPECTED_ERROR_IN_STORE     @"UnexpectedErrorInStore"
+#define EVENT_VERIFICATION_ERROR            @"VerificationError"
+#define EVENT_VERIFICATION_STARTED          @"VerificationStarted"
+#define EVENT_VERIFICATION_FAILED           @"VerificationFailed"
 
 
 // UserInfo Elements
@@ -74,10 +77,12 @@
 
 
 // Error Codes
-#define ERR_GENERAL                 0
-#define ERR_VERIFICATION_TIMEOUT    1
-#define ERR_VERIFICATION_FAIL       2
-#define ERR_PURCHASE_FAIL           3
+#define ERR_GENERAL                     0
+#define ERR_VERIFICATION_TIMEOUT        1
+#define ERR_VERIFICATION_FAIL           2
+#define ERR_PURCHASE_FAIL               3
+#define ERR_VERIFICATION_ERROR          4
+#define ERR_VERIFICATION_UNAVAILABLE    5
 
 
 /**
@@ -129,5 +134,11 @@
 + (void)postUnexpectedError:(int)code forObject:(id)object;
 
 + (void)postSoomlaStoreInitialized;
+
++ (void)postVerificationError:(int)code forObject:(id)object;
+
++ (void)postVerificationStarted:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload;
+
++ (void)postVerificationFailed:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload;
 
 @end

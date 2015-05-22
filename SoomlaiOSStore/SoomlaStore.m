@@ -46,6 +46,8 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
     @synchronized( self ) {
         if( _instance == nil ) {
             _instance = [[SoomlaStore alloc] init];
+            
+            NSLog(@"Testing version: 2");
         }
     }
 
@@ -80,6 +82,34 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
     } else {
         [StoreEventHandling postBillingNotSupported];
     }
+    
+    [self logSKPaymentTransactions:@" -- after loadBillingService"];
+    
+}
+
+- (void)retryUnfinishedTransactions {
+    LogDebug(TAG, @"Reprocessing any unfinished transactions");
+    NSArray* transactions = [[SKPaymentQueue defaultQueue] transactions];
+    NSLog(@"%@ : Checking payment queue transactions: %@:",@"reprocessUnfinishedCompletedTransactions", transactions);
+    for (SKPaymentTransaction *transaction in transactions)
+    {
+        NSLog(@"... transaction:\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@\n transactionReceipt: %@", transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate, transaction.transactionReceipt );
+        
+        if (transaction.transactionState == SKPaymentTransactionStatePurchased) {
+            LogDebug(TAG, ([NSString stringWithFormat:@"Reprocessing transaction for product: %@", transaction.payment.productIdentifier]));
+            [self givePurchasedItem:transaction];
+        }
+    }
+}
+
+- (void)logSKPaymentTransactions:(NSString*) msg {
+    NSArray* transactions = [[SKPaymentQueue defaultQueue] transactions];
+    NSLog(@"%@ : Checking payment queue transactions: %@:",msg, transactions);
+    for (SKPaymentTransaction *transaction in transactions)
+    {
+        NSLog(@"... transaction:\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@", transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate);
+    }
+    
 }
 
 static NSString* developerPayload = NULL;
@@ -90,7 +120,15 @@ static NSString* developerPayload = NULL;
         payment.productIdentifier = marketItem.productId;
         payment.quantity = 1;
         developerPayload = payload;
+        
+        //*tj
+        [self logSKPaymentTransactions:@" ** before buying product"];
+        
         [[SKPaymentQueue defaultQueue] addPayment:payment];
+        
+        //*tj
+        [self logSKPaymentTransactions:@" ** after buying product"];
+        
 
         @try {
             PurchasableVirtualItem* pvi = [[StoreInfo getInstance] purchasableItemWithProductId:marketItem.productId];
@@ -133,8 +171,15 @@ static NSString* developerPayload = NULL;
 
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions
 {
+    [self logSKPaymentTransactions:@"in paymentQueue"];
+    NSLog(@"!! SKPaymentQueue called our paymentQueue with transactions: %@", transactions);
+    
     for (SKPaymentTransaction *transaction in transactions)
     {
+        
+        NSLog(@"... transaction:\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@", transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate);
+        
+        
         switch (transaction.transactionState)
         {
             case SKPaymentTransactionStatePurchased:
@@ -151,6 +196,16 @@ static NSString* developerPayload = NULL;
     }
 }
 
+- (NSURL *)getReceiptUrl {
+    float version = [[[UIDevice currentDevice] systemVersion] floatValue];
+    
+    NSURL* receiptUrl = [NSURL URLWithString:@"file:///"];
+    if (version >= 7) {
+        receiptUrl = [[NSBundle mainBundle] appStoreReceiptURL];
+    }
+    return receiptUrl;
+}
+
 - (void)finalizeTransaction:(SKPaymentTransaction *)transaction forPurchasable:(PurchasableVirtualItem*)pvi {
     if ([StoreInfo isItemNonConsumable:pvi]){
         int balance = [[[StorageManager getInstance] virtualItemStorage:pvi] balanceForItem:pvi.itemId];
@@ -161,12 +216,7 @@ static NSString* developerPayload = NULL;
         }
     }
 
-    float version = [[[UIDevice currentDevice] systemVersion] floatValue];
-
-    NSURL* receiptUrl = [NSURL URLWithString:@"file:///"];
-    if (version >= 7) {
-        receiptUrl = [[NSBundle mainBundle] appStoreReceiptURL];
-    }
+    NSURL* receiptUrl = [self getReceiptUrl];
 
     [StoreEventHandling postMarketPurchase:pvi withReceiptUrl:receiptUrl andPurchaseToken:transaction.transactionIdentifier andPayload:developerPayload];
     [pvi giveAmount:1];
@@ -179,7 +229,7 @@ static NSString* developerPayload = NULL;
 
 - (void)purchaseVerified:(NSNotification*)notification{
     [[NSNotificationCenter defaultCenter] removeObserver:self name:EVENT_MARKET_PURCHASE_VERIF object:notification.object];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:EVENT_UNEXPECTED_ERROR_IN_STORE object:notification.object];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:EVENT_VERIFICATION_ERROR object:notification.object];
     
     NSDictionary* userInfo = notification.userInfo;
     PurchasableVirtualItem* purchasable = [userInfo objectForKey:DICT_ELEMENT_PURCHASABLE];
@@ -191,13 +241,14 @@ static NSString* developerPayload = NULL;
     } else {
         LogError(TAG, @"Failed to verify transaction receipt. The user will not get what he just bought.");
         [[SKPaymentQueue defaultQueue] finishTransaction: transaction];
-        [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_FAIL forObject:self];
+        NSURL* receiptUrl = [self getReceiptUrl];
+        [StoreEventHandling postVerificationFailed:purchasable withReceiptUrl:receiptUrl andPurchaseToken:transaction.transactionIdentifier andPayload:developerPayload];
     }
 }
 
 - (void)unexpectedVerificationError:(NSNotification*)notification{
     [[NSNotificationCenter defaultCenter] removeObserver:self name:EVENT_MARKET_PURCHASE_VERIF object:notification.object];
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:EVENT_UNEXPECTED_ERROR_IN_STORE object:notification.object];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:EVENT_VERIFICATION_ERROR object:notification.object];
 }
 
 - (void)givePurchasedItem:(SKPaymentTransaction *)transaction
@@ -209,9 +260,12 @@ static NSString* developerPayload = NULL;
             SoomlaVerification *sv = [[SoomlaVerification alloc] initWithTransaction:transaction andPurchasable:pvi];
             
             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(purchaseVerified:) name:EVENT_MARKET_PURCHASE_VERIF object:sv];
-            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(unexpectedVerificationError:) name:EVENT_UNEXPECTED_ERROR_IN_STORE object:sv];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(unexpectedVerificationError:) name:EVENT_VERIFICATION_ERROR object:sv];
 
             [sv verifyData];
+            
+            NSURL* receiptUrl = [self getReceiptUrl];
+            [StoreEventHandling postVerificationStarted:pvi withReceiptUrl:receiptUrl andPurchaseToken:transaction.transactionIdentifier andPayload:developerPayload];
         } else {
             [self finalizeTransaction:transaction forPurchasable:pvi];
         }

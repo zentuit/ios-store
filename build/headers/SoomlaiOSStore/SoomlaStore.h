@@ -91,4 +91,11 @@
 */
 - (void)loadBillingService;
 
+/**
+ Retry any unfinished transactions. If on a purchase, the verification server returns a non-200 status
+ then the transaction is not verified nor is it marked in SKPaymentQueue as finished. When we start up, we
+ need to finish verifying these pending transactions. Calling restoreTransactions won't work if the
+ transactions are for consumables. We will have to try the verification again.
+ */
+- (void)retryUnfinishedTransactions;
 @end
