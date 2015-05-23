@@ -46,8 +46,6 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
     @synchronized( self ) {
         if( _instance == nil ) {
             _instance = [[SoomlaStore alloc] init];
-            
-            NSLog(@"Testing version: 2");
         }
     }
 
@@ -82,34 +80,23 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
     } else {
         [StoreEventHandling postBillingNotSupported];
     }
-    
-    [self logSKPaymentTransactions:@" -- after loadBillingService"];
-    
 }
 
 - (void)retryUnfinishedTransactions {
-    LogDebug(TAG, @"Reprocessing any unfinished transactions");
     NSArray* transactions = [[SKPaymentQueue defaultQueue] transactions];
-    NSLog(@"%@ : Checking payment queue transactions: %@:",@"reprocessUnfinishedCompletedTransactions", transactions);
+    LogDebug(TAG, ([NSString stringWithFormat:@"Retrying any unfinished transactions: %d", transactions.count]));
+    
+    NSLog(@"!! retryUnfinishedTransactions transactions: %@", transactions);
+    
     for (SKPaymentTransaction *transaction in transactions)
     {
-        NSLog(@"... transaction:\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@\n transactionReceipt: %@", transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate, transaction.transactionReceipt );
+        [self logTransaction:transaction];
         
         if (transaction.transactionState == SKPaymentTransactionStatePurchased) {
             LogDebug(TAG, ([NSString stringWithFormat:@"Reprocessing transaction for product: %@", transaction.payment.productIdentifier]));
             [self givePurchasedItem:transaction];
         }
     }
-}
-
-- (void)logSKPaymentTransactions:(NSString*) msg {
-    NSArray* transactions = [[SKPaymentQueue defaultQueue] transactions];
-    NSLog(@"%@ : Checking payment queue transactions: %@:",msg, transactions);
-    for (SKPaymentTransaction *transaction in transactions)
-    {
-        NSLog(@"... transaction:\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@", transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate);
-    }
-    
 }
 
 static NSString* developerPayload = NULL;
@@ -120,16 +107,7 @@ static NSString* developerPayload = NULL;
         payment.productIdentifier = marketItem.productId;
         payment.quantity = 1;
         developerPayload = payload;
-        
-        //*tj
-        [self logSKPaymentTransactions:@" ** before buying product"];
-        
         [[SKPaymentQueue defaultQueue] addPayment:payment];
-        
-        //*tj
-        [self logSKPaymentTransactions:@" ** after buying product"];
-        
-
         @try {
             PurchasableVirtualItem* pvi = [[StoreInfo getInstance] purchasableItemWithProductId:marketItem.productId];
             [StoreEventHandling postMarketPurchaseStarted:pvi];
@@ -169,16 +147,19 @@ static NSString* developerPayload = NULL;
 #pragma mark -
 #pragma mark SKPaymentTransactionObserver methods
 
+- (void)logTransaction:(SKPaymentTransaction *)transaction
+{
+    NSLog(@"... transaction: %@\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@", transaction, transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate);
+}
+
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions
 {
-    [self logSKPaymentTransactions:@"in paymentQueue"];
     NSLog(@"!! SKPaymentQueue called our paymentQueue with transactions: %@", transactions);
     
     for (SKPaymentTransaction *transaction in transactions)
     {
         
-        NSLog(@"... transaction:\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@", transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate);
-        
+        [self logTransaction:transaction];
         
         switch (transaction.transactionState)
         {
