@@ -66,6 +66,7 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
     [self loadBillingService];
 
     [self refreshMarketItemsDetails];
+    [self retryUnfinishedTransactions];
 
     self.initialized = YES;
     [StoreEventHandling postSoomlaStoreInitialized];
