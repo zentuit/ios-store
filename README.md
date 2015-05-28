@@ -1,4 +1,4 @@
-*This project is a part of The [SOOMLA](http://project.soom.la) Framework which is a series of open source initiatives with a joint goal to help mobile game developers do more together. SOOMLA encourages better game design, economy modeling, social engagement, and faster development.*
+*This project is a fork of The [SOOMLA](http://project.soom.la) Framework which is a series of open source initiatives with a joint goal to help mobile game developers do more together. SOOMLA encourages better game design, economy modeling, social engagement, and faster development. This project is the fork that I use for my projects as it has some additional features (and fixes).*
 
 Haven't you ever wanted an in-app purchase one liner that looks like this ?!
 
@@ -10,6 +10,8 @@ ios-store
 ---
 
 *SOOMLA's Store Module for iOS*
+
+**May 28th, 2015**: Added retrying unfinished transactions and custom verification events. Also made this my official fork for my projects.
 
 **September 15th, 2014**:
 `NonConsumableItem` class was removed.
