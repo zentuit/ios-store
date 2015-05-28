@@ -29,8 +29,6 @@
 @implementation SoomlaVerification
 
 static NSString* TAG = @"SOOMLA SoomlaVerification";
-BOOL testProblem = YES;
-int testCount = 0;
 
 
 - (id) initWithTransaction:(SKPaymentTransaction*)t andPurchasable:(PurchasableVirtualItem*)pvi {
@@ -92,7 +90,6 @@ int testCount = 0;
         [conn start];
     } else {
         LogError(TAG, ([NSString stringWithFormat:@"An error occured while trying to get receipt data. Stopping the verification process for: %@", transaction.payment.productIdentifier]));
-        [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_TIMEOUT forObject:self];
         [StoreEventHandling postVerificationError:ERR_VERIFICATION_TIMEOUT forObject:self];
     }
 }
@@ -117,7 +114,6 @@ int testCount = 0;
     NSNumber* verifiedNum = nil;
     if ([dataStr isEqualToString:@""]) {
         LogError(TAG, @"There was a problem when verifying. Got an empty response. Will try again later.");
-        [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_FAIL forObject:self];
         [StoreEventHandling postVerificationError:ERR_VERIFICATION_FAIL forObject:self];
         return;
     }
@@ -132,11 +128,7 @@ int testCount = 0;
     
     BOOL verified = NO;
     
-    testProblem = (testCount % 5 == 2) || (testCount % 5 == 3);
-    NSLog(@" ====== testProblem is %@", testProblem ? @"YES" : @"NO");
-    testCount++;
-    
-    if (responseCode==200 && verifiedNum && !testProblem) { //*tj
+    if (responseCode==200 && verifiedNum) {
         verified = [verifiedNum boolValue];
         if (!verified) {
             NSNumber* emptyResponse = (NSNumber*)[responseDict objectForKey:@"emptyResponse"];
@@ -170,7 +162,6 @@ int testCount = 0;
         }
         
         LogError(TAG, ([NSString stringWithFormat:@"There was a problem when verifying (%@). Will try again later.", errorMsg]));
-        [StoreEventHandling postUnexpectedError:errorCode forObject:self];
         [StoreEventHandling postVerificationError:errorCode forObject:self];
     }
 }
@@ -178,7 +169,6 @@ int testCount = 0;
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
     LogError(TAG, @"Failed to connect to verification server. Not doing anything ... the purchasing process will happen again next time the service is initialized.");
     LogDebug(TAG, [error description]);
-    [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_TIMEOUT forObject:self];
     [StoreEventHandling postVerificationError:ERR_VERIFICATION_TIMEOUT forObject:self];
 }
 
@@ -191,7 +181,6 @@ int testCount = 0;
 
 - (void)request:(SKRequest *)request didFailWithError:(NSError *)error {
     LogDebug(TAG, ([NSString stringWithFormat:@"Error trying to request receipt: %@", error]));
-    [StoreEventHandling postUnexpectedError:ERR_VERIFICATION_FAIL forObject:self];
     [StoreEventHandling postVerificationError:ERR_VERIFICATION_FAIL forObject:self];
 }
 
