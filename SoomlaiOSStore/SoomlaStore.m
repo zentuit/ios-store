@@ -77,6 +77,7 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
 - (void)loadBillingService {
     if ([SKPaymentQueue canMakePayments]) {
         [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(movedToForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
         [StoreEventHandling postBillingSupported];
     } else {
         [StoreEventHandling postBillingNotSupported];
@@ -85,24 +86,24 @@ static NSString* TAG = @"SOOMLA SoomlaStore";
 
 - (void)retryUnfinishedTransactions {
     NSArray* transactions = [[SKPaymentQueue defaultQueue] transactions];
-    LogDebug(TAG, ([NSString stringWithFormat:@"Retrying any unfinished transactions: %d", transactions.count]));
-    
-    NSLog(@"!! retryUnfinishedTransactions transactions: %@", transactions);
+    LogDebug(TAG, ([NSString stringWithFormat:@"Retrying any unfinished transactions: %lu", (unsigned long)transactions.count]));
     
     for (SKPaymentTransaction *transaction in transactions)
     {
-        [self logTransaction:transaction];
-        
         if (transaction.transactionState == SKPaymentTransactionStatePurchased) {
-            LogDebug(TAG, ([NSString stringWithFormat:@"Reprocessing transaction for product: %@", transaction.payment.productIdentifier]));
             [self givePurchasedItem:transaction];
         }
     }
 }
 
+- (void)movedToForeground:(NSNotification*)notification {
+    [self retryUnfinishedTransactions];
+}
+
 static NSString* developerPayload = NULL;
 - (BOOL)buyInMarketWithMarketItem:(MarketItem*)marketItem andPayload:(NSString*)payload{
-
+    LogDebug(TAG, ([NSString stringWithFormat:@"Starting in-app purchase for productId: %@", marketItem.productId]));
+    
     if ([SKPaymentQueue canMakePayments]) {
         SKMutablePayment *payment = [[SKMutablePayment alloc] init] ;
         payment.productIdentifier = marketItem.productId;
@@ -148,20 +149,10 @@ static NSString* developerPayload = NULL;
 #pragma mark -
 #pragma mark SKPaymentTransactionObserver methods
 
-- (void)logTransaction:(SKPaymentTransaction *)transaction
-{
-    NSLog(@"... transaction: %@\n error : %@\n payment.productId: %@\n transactionState: %ld\n transactionIdentifier: %@\n transactionDate: %@", transaction, transaction.error, transaction.payment.productIdentifier, (long)transaction.transactionState, transaction.transactionIdentifier, transaction.transactionDate);
-}
-
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions
 {
-    NSLog(@"!! SKPaymentQueue called our paymentQueue with transactions: %@", transactions);
-    
     for (SKPaymentTransaction *transaction in transactions)
     {
-        
-        [self logTransaction:transaction];
-        
         switch (transaction.transactionState)
         {
             case SKPaymentTransactionStatePurchased:
