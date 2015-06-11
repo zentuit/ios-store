@@ -23,6 +23,8 @@
 
 @interface SoomlaVerification () <NSURLConnectionDelegate, SKRequestDelegate> {
     BOOL tryAgain;
+    
+    BOOL failVerification;
 }
 @end
 
@@ -36,6 +38,8 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
         transaction = t;
         purchasable = pvi;
         tryAgain = YES;
+        
+        failVerification = YES;
     }
     
     return self;
@@ -127,6 +131,11 @@ static NSString* TAG = @"SOOMLA SoomlaVerification";
     }
     
     BOOL verified = NO;
+    
+    if (failVerification) {
+        responseCode = 500;
+        failVerification = !failVerification;
+    }
     
     if (responseCode==200 && verifiedNum) {
         verified = [verifiedNum boolValue];
