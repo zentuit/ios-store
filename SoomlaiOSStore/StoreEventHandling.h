@@ -61,8 +61,7 @@
 #define DICT_ELEMENT_PURCHASABLE       @"PurchasableVirtualItem"
 #define DICT_ELEMENT_PURCHASABLE_ID    @"PurchasableVirtualItemId"
 #define DICT_ELEMENT_DEVELOPERPAYLOAD  @"DeveloperPayload"
-#define DICT_ELEMENT_RECEIPT           @"receipt"
-#define DICT_ELEMENT_TOKEN             @"token"
+#define DICT_ELEMENT_EXTRA_INFO        @"extraInfo"
 #define DICT_ELEMENT_SUCCESS           @"success"
 #define DICT_ELEMENT_VERIFIED          @"verified"
 #define DICT_ELEMENT_TRANSACTION       @"transaction"
@@ -84,6 +83,13 @@
 #define ERR_VERIFICATION_ERROR          4
 #define ERR_VERIFICATION_UNAVAILABLE    5
 
+//Purchase Elements
+#define PURCHASE_ELEMENT_RECEIPT_URL            @"receiptUrl"
+#define PURCHASE_ELEMENT_TRANSACTION_ID         @"transactionIdentifier"
+#define PURCHASE_ELEMENT_RECEIPT                @"receiptBase64"
+#define PURCHASE_ELEMENT_TRANSACTION_DATE       @"transactionDate"
+#define PURCHASE_ELEMENT_ORIG_TRANSACTION_DATE  @"originalTransactionDate"
+#define PURCHASE_ELEMENT_ORIG_TRANSACTION_ID    @"originalTransactionIdentifier"
 
 /**
  * This class is used to register and post all the supported events.
@@ -115,7 +121,7 @@
 
 + (void)postMarketPurchaseCancelled:(PurchasableVirtualItem*)purchasableVirtualItem;
 
-+ (void)postMarketPurchase:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload;
++ (void)postMarketPurchase:(PurchasableVirtualItem*)purchasableVirtualItem withExtraInfo:(NSDictionary*)extraInfo andPayload:(NSString*)payload;
 
 + (void)postMarketPurchaseVerification:(BOOL)verified forItem:(PurchasableVirtualItem*)purchasableVirtualItem andTransaction:(SKPaymentTransaction*)transaction forObject:(id)object;
 
@@ -137,8 +143,8 @@
 
 + (void)postVerificationError:(int)code forObject:(id)object;
 
-+ (void)postVerificationStarted:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload;
++ (void)postVerificationStarted:(PurchasableVirtualItem*)purchasableVirtualItem withExtraInfo:(NSDictionary*)extraInfo andPayload:(NSString*)payload;
 
-+ (void)postVerificationFailed:(PurchasableVirtualItem*)purchasableVirtualItem withReceiptUrl:(NSURL*)receiptUrl andPurchaseToken:(NSString*)token andPayload:(NSString*)payload;
++ (void)postVerificationFailed:(PurchasableVirtualItem*)purchasableVirtualItem andPayload:(NSString*)payload;
 
 @end

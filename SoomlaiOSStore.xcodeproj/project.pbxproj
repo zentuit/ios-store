@@ -72,6 +72,7 @@
 		C097629B18FBF2D9000A4403 /* VirtualGoodStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = C024133E176F2512007BB351 /* VirtualGoodStorage.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		C097629C18FBF2D9000A4403 /* VirtualItemStorage.h in Headers */ = {isa = PBXBuildFile; fileRef = C0241340176F2512007BB351 /* VirtualItemStorage.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		C0DA654C1B18780500DFF6D9 /* libSoomlaiOSCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EF6F64561962FFCB0044608D /* libSoomlaiOSCore.a */; settings = {ATTRIBUTES = (Weak, ); }; };
+		E24554131B2B183F0023B4B3 /* StoreUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = E24554121B2B183F0023B4B3 /* StoreUtils.m */; };
 		EF4CDD2F194F20C7008B1CF2 /* VirtualItemReward.h in Headers */ = {isa = PBXBuildFile; fileRef = EF4CDD2D194F20C7008B1CF2 /* VirtualItemReward.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EF4CDD30194F20C7008B1CF2 /* VirtualItemReward.m in Sources */ = {isa = PBXBuildFile; fileRef = EF4CDD2E194F20C7008B1CF2 /* VirtualItemReward.m */; };
 /* End PBXBuildFile section */
@@ -154,6 +155,8 @@
 		C02CECF5160DCB4A000AA0D2 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C054F21117FAB22A006F5B8E /* SoomlaVerification.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SoomlaVerification.h; sourceTree = "<group>"; };
 		C054F21217FAB22A006F5B8E /* SoomlaVerification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SoomlaVerification.m; sourceTree = "<group>"; };
+		E24554121B2B183F0023B4B3 /* StoreUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StoreUtils.m; sourceTree = "<group>"; };
+		E24554151B2B18790023B4B3 /* StoreUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StoreUtils.h; sourceTree = "<group>"; };
 		EF4CDD2D194F20C7008B1CF2 /* VirtualItemReward.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VirtualItemReward.h; sourceTree = "<group>"; };
 		EF4CDD2E194F20C7008B1CF2 /* VirtualItemReward.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualItemReward.m; sourceTree = "<group>"; };
 		EF6F64511962FFCB0044608D /* SoomlaiOSCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SoomlaiOSCore.xcodeproj; path = "submodules/soomla-ios-core/SoomlaiOSCore.xcodeproj"; sourceTree = "<group>"; };
@@ -196,6 +199,8 @@
 				C0241379176F2512007BB351 /* SoomlaStore.m */,
 				C024137A176F2512007BB351 /* StoreInventory.h */,
 				C024137B176F2512007BB351 /* StoreInventory.m */,
+				E24554121B2B183F0023B4B3 /* StoreUtils.m */,
+				E24554151B2B18790023B4B3 /* StoreUtils.h */,
 			);
 			path = SoomlaiOSStore;
 			sourceTree = "<group>";
@@ -481,6 +486,7 @@
 				C02413BB176F2512007BB351 /* SingleUsePackVG.m in Sources */,
 				C02413BE176F2512007BB351 /* SingleUseVG.m in Sources */,
 				C02413C1176F2512007BB351 /* UpgradeVG.m in Sources */,
+				E24554131B2B183F0023B4B3 /* StoreUtils.m in Sources */,
 				C02413C4176F2512007BB351 /* VirtualGood.m in Sources */,
 				C02413C7176F2512007BB351 /* VirtualItem.m in Sources */,
 				C02413CA176F2512007BB351 /* StoreEventHandling.m in Sources */,
